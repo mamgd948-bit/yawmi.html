@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="يومي">
+<meta name="theme-color" content="#EDEFEA">
+<title>يومي</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<style>
+:root{
+  --paper:#EDEFEA; --card:#FAFBF8; --ink:#18211E; --muted:#66706A; --line:#D5D9D2;
+  --green:#1E5B49; --on-green:#FFFFFF; --rec:#D8412F; --soft:#E1E6DF;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#121714; --card:#1B221E; --ink:#E8ECE6; --muted:#94A09A; --line:#2E3832;
+    --green:#5FB394; --on-green:#0E1511; --rec:#F0614F; --soft:#232C27;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.6}
+body{padding-top:env(safe-area-inset-top)}
+main{max-width:520px;margin:0 auto;padding:20px 16px calc(96px + env(safe-area-inset-bottom))}
+h1{font-size:15px;font-weight:500;color:var(--muted);margin:4px 0 14px}
+h2{font-size:17px;font-weight:700;margin:26px 0 10px}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
+/* viewfinder card */
+.vf{position:relative;background:var(--card);padding:26px 22px 22px}
+.vf>i{position:absolute;width:20px;height:20px;border:2.5px solid var(--ink)}
+.vf>i:nth-child(1){top:8px;right:8px;border-left:0;border-bottom:0}
+.vf>i:nth-child(2){top:8px;left:8px;border-right:0;border-bottom:0}
+.vf>i:nth-child(3){bottom:8px;right:8px;border-left:0;border-top:0}
+.vf>i:nth-child(4){bottom:8px;left:8px;border-right:0;border-top:0}
+.vf.shoot>i{border-color:var(--rec)}
+.vf.done>i{border-color:var(--green)}
+.state{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted)}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--muted)}
+.shoot .dot{background:var(--rec);animation:blink 1.6s steps(2,jump-none) infinite}
+.done .dot{background:var(--green);animation:none}
+@keyframes blink{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.shoot .dot{animation:none}}
+.big{font-size:34px;font-weight:700;line-height:1.25;margin:8px 0 4px}
+.sub{color:var(--muted);margin:0 0 18px}
+.counter{display:flex;align-items:center;gap:14px}
+.counter .n{font-size:40px;font-weight:700;min-width:44px;text-align:center}
+.counter .lbl{color:var(--muted);flex:1}
+.round{width:46px;height:46px;border-radius:50%;background:var(--soft);font-size:24px;line-height:1;color:var(--ink)}
+.round.plus{background:var(--green);color:var(--on-green)}
+.round:active{transform:scale(.94)}
+
+/* week */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:8px 0 7px;text-align:center;font-size:12px;color:var(--muted)}
+.day b{display:block;font-size:17px;font-weight:700;color:var(--ink);margin-top:2px;min-height:26px}
+.day.shoot{border-color:var(--ink)}
+.day.done{background:var(--green);border-color:var(--green);color:var(--on-green)}
+.day.done b{color:var(--on-green)}
+.day.missed{border-color:var(--rec);border-style:dashed}
+.day.missed b{color:var(--rec)}
+.day.today{box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+.legend{font-size:13px;color:var(--muted);margin:10px 2px 0}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border-radius:12px;padding:14px}
+.stat b{display:block;font-size:26px;font-weight:700}
+.stat span{color:var(--muted);font-size:14px}
+
+.box{background:var(--card);border-radius:12px;padding:14px}
+.pick p{margin:0 0 10px;font-size:17px}
+.pick .tag{font-size:13px;color:var(--muted);margin-bottom:2px}
+
+.btn{background:var(--green);color:var(--on-green);border-radius:10px;padding:11px 16px;font-weight:500}
+.btn.ghost{background:var(--soft);color:var(--ink)}
+.btn.block{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>.btn{flex:1;min-width:120px}
+
+textarea,input[type=number],input[type=text]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:11px 12px}
+textarea{min-height:104px;resize:vertical}
+textarea:focus,input:focus{border-color:var(--green);outline:none}
+
+.help{margin-top:14px}
+.help h3{font-size:15px;margin:12px 0 4px}
+.help ul{margin:0;padding:0 18px 0 0}
+.help li{margin:3px 0}
+.help .note{color:var(--muted);font-size:13px;margin-top:10px}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.item{display:flex;gap:10px;align-items:flex-start;background:var(--card);border-radius:12px;padding:12px}
+.item .txt{flex:1;word-break:break-word}
+.item.done .txt{color:var(--muted);text-decoration:line-through}
+.chk{width:24px;height:24px;border-radius:7px;border:2px solid var(--ink);background:transparent;flex:none;margin-top:2px;color:var(--on-green);font-size:15px;line-height:1}
+.item.done .chk{background:var(--green);border-color:var(--green)}
+.x{background:none;color:var(--muted);font-size:20px;padding:0 4px;line-height:1}
+.empty{color:var(--muted);padding:18px 4px;text-align:center}
+
+/* money */
+.monthbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.monthbar .m{font-weight:700;font-size:17px}
+.arrow{width:40px;height:40px;border-radius:50%;background:var(--soft);font-size:18px;color:var(--ink)}
+.save{background:var(--green);color:var(--on-green);border-radius:14px;padding:18px}
+.save span{opacity:.85;font-size:14px}
+.save b{display:block;font-size:34px;font-weight:700;line-height:1.3}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.tile{background:var(--card);border-radius:12px;padding:10px 8px;text-align:center}
+.tile span{display:block;font-size:12.5px;color:var(--muted)}
+.tile b{font-size:17px;font-weight:700;word-break:break-all}
+.pos{color:var(--green)} .neg{color:var(--rec)}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:10px;padding:3px;margin-bottom:8px}
+.seg button{background:transparent;border-radius:8px;padding:9px;font-weight:500;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink)}
+.form{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.form .btn{grid-column:1/-1}
+.amt{font-weight:700;white-space:nowrap}
+.sm{font-size:13px;color:var(--muted)}
+.startrow{display:flex;gap:10px;align-items:center;margin-top:10px}
+.startrow label{font-size:14px;color:var(--muted);flex:1}
+.startrow input{width:130px}
+
+/* tab bar */
+nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom)}
+nav button{background:none;padding:10px 0 8px;color:var(--muted);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--green);font-weight:700}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom));background:var(--ink);color:var(--paper);
+  padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="tabs">
+  <button data-act="tab" data-t="today"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="3"/><circle cx="12" cy="12.5" r="3.2"/><path d="M8 6l1.2-2h5.6L16 6"/></svg>اليوم</button>
+  <button data-act="tab" data-t="ideas"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>الأفكار</button>
+  <button data-act="tab" data-t="money"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.5v.01M17.5 14.5v.01"/></svg>الفلوس</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+/* ---------- storage ---------- */
+const KEY='yawmi-v1';
+let mem=null;
+function load(){
+  try{const r=localStorage.getItem(KEY); if(r) return JSON.parse(r);}catch(e){}
+  return mem||{log:{},ideas:[],money:[],start:0};
+}
+let S=load();
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){mem=S;} }
+
+/* ---------- helpers ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const mkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+const isShoot=d=>[4,5,6].includes(d.getDay());          // الخميس والجمعة والسبت
+const DAY=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const SHORT=['أحد','اثنين','ثلاثاء','أربع','خميس','جمعة','سبت'];
+const fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:2});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+
+let tab='today', draft='', helpFor=null;
+let mon=new Date(); mon.setDate(1);
+let mtype='out', mAmt='', mNote='';
+
+function toast(t){
+  const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show');
+  clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+/* ---------- today ---------- */
+function streak(){
+  let s=0, today=key(new Date());
+  for(let i=0;i<400;i++){
+    const d=addDays(new Date(),-i);
+    if(!isShoot(d)) continue;
+    if((S.log[key(d)]||0)>0) s++;
+    else if(key(d)===today) continue;
+    else break;
+  }
+  return s;
+}
+
+function viewToday(){
+  const now=new Date(), k=key(now), n=S.log[k]||0, shoot=isShoot(now);
+  let cls='', title, sub;
+  if(shoot && n===0){ cls='shoot'; title='النهارده يوم تصوير'; sub='صوّر فيديو واحد على الأقل.'; }
+  else if(shoot){ cls='done'; title='خلصت يوم النهارده'; sub=`صورت ${n} ${n>2?'فيديوهات':n===2?'فيديوهين':'فيديو'}. كمّل لو عندك طاقة.`; }
+  else{
+    let i=1; while(!isShoot(addDays(now,i))) i++;
+    const nx=DAY[addDays(now,i).getDay()];
+    title='النهارده راحة';
+    sub=`يوم التصوير الجاي: ${nx}${i===1?' (بكرة)':` (كمان ${i} ${i<=10?'أيام':'يوم'})`}. جهّز أفكارك.`;
+    if(n>0) cls='done';
+  }
+
+  // week strip (starts Saturday)
+  const start=addDays(now,-((now.getDay()+1)%7));
+  let wk='', doneDays=0;
+  for(let i=0;i<7;i++){
+    const d=addDays(start,i), dk=key(d), c=S.log[dk]||0, sh=isShoot(d);
+    let st='';
+    if(sh){ st='shoot'; if(c>0){st+=' done'; doneDays++;} else if(dk<k) st+=' missed'; }
+    if(dk===k) st+=' today';
+    wk+=`<div class="day ${st}">${SHORT[d.getDay()]}<b>${c>0?c:(sh&&dk<k?'×':'')}</b></div>`;
+  }
+
+  // month total
+  const mk=mkey(now);
+  const monthTotal=Object.entries(S.log).filter(([d])=>d.startsWith(mk)).reduce((a,[,v])=>a+v,0);
+
+  // next idea
+  const idea=S.ideas.find(x=>!x.done);
+  const ideaBox=idea?`<h2>فكرة جاهزة</h2><div class="box pick"><div class="tag">أقدم فكرة لسه متصورتش</div>
+    <p>${esc(idea.text)}</p><button class="btn block" data-act="idea-shot" data-id="${idea.id}">صوّرتها</button></div>`:
+    `<h2>فكرة جاهزة</h2><div class="box empty">مفيش أفكار مستنية. اكتب فكرة من تبويب الأفكار.</div>`;
+
+  return `<h1>${new Date().toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'})}</h1>
+  <section class="vf ${cls}"><i></i><i></i><i></i><i></i>
+    <div class="state"><span class="dot"></span>${shoot?'تصوير':'راحة'}</div>
+    <div class="big">${title}</div><p class="sub">${sub}</p>
+    <div class="counter">
+      <button class="round" data-act="dec" aria-label="نقص فيديو">−</button>
+      <div class="n">${n}</div>
+      <button class="round plus" data-act="inc" aria-label="زوّد فيديو">+</button>
+      <div class="lbl">فيديو النهارده</div>
+    </div>
+  </section>
+  <h2>الأسبوع ده</h2>
+  <div class="week">${wk}</div>
+  <p class="legend">الإطار الغامق = يوم تصوير. الأخضر اتصور. الأحمر المتقطع فاتك.</p>
+  <h2>أرقامك</h2>
+  <div class="stats">
+    <div class="stat"><b>${doneDays} من 3</b><span>أيام تصوير الأسبوع ده</span></div>
+    <div class="stat"><b>${streak()}</b><span>أيام تصوير ورا بعض</span></div>
+    <div class="stat"><b>${monthTotal}</b><span>فيديو الشهر ده</span></div>
+    <div class="stat"><b>${S.ideas.filter(x=>!x.done).length}</b><span>فكرة مستنية</span></div>
+  </div>
+  ${ideaBox}`;
+}
+
+/* ---------- ideas ---------- */
+function helperHTML(t){
+  const e=esc(t);
+  return `<div class="box help">
+    <h3>عناوين مقترحة (عدّل عليها)</h3>
+    <ul><li>اللي محدش قالك عليه عن: ${e}</li><li>جربت ${e} وده اللي حصل</li><li>٣ أخطاء بتعملها في ${e}</li><li>${e}: قبل وبعد</li></ul>
+    <h3>شكل الفيديو (٣٠ إلى ٦٠ ثانية)</h3>
+    <ul><li>أول ٣ ثواني: أقوى لقطة عندك + جملة تشد</li><li>النص: ٣ لقطات تفاصيل قريبة</li><li>الآخر: النتيجة + سؤال للمتابعين</li></ul>
+    <h3>قبل ما تصوّر</h3>
+    <ul><li>الإضاءة والكادر جاهزين؟</li><li>لقطة B-roll واحدة على الأقل</li><li>الصوت أو الموسيقى مختارين؟</li></ul>
+    <div class="row" style="margin-top:12px"><button class="btn" data-act="idea-ai">أفكار أكتر من Claude</button><button class="btn ghost" data-act="idea-save">احفظ الفكرة</button></div>
+    <p class="note">زرار Claude بيفتح التطبيق بسؤال جاهز بفكرتك.</p>
+  </div>`;
+}
+
+function viewIdeas(){
+  const pend=S.ideas.filter(x=>!x.done), done=S.ideas.filter(x=>x.done);
+  const row=x=>`<div class="item ${x.done?'done':''}">
+    <button class="chk" data-act="idea-toggle" data-id="${x.id}" aria-label="اتصورت">${x.done?'✓':''}</button>
+    <div class="txt">${esc(x.text)}</div>
+    <button class="x" data-act="idea-del" data-id="${x.id}" aria-label="احذف">×</button></div>`;
+  return `<h1>أفكار الفيديوهات</h1>
+  <textarea id="draft" placeholder="اكتب الفكرة زي ما جت في دماغك، حتى لو كلمتين">${esc(draft)}</textarea>
+  <div class="row" style="margin-top:8px">
+    <button class="btn" data-act="idea-help">ساعدني أطورها</button>
+    <button class="btn ghost" data-act="idea-save">احفظها</button>
+  </div>
+  ${helpFor?helperHTML(helpFor):''}
+  <h2>مستنية التصوير (${pend.length})</h2>
+  <div class="list">${pend.length?pend.map(row).join(''):'<div class="empty">مفيش أفكار لسه. اكتب أول فكرة فوق.</div>'}</div>
+  ${done.length?`<h2>اتصورت (${done.length})</h2><div class="list">${done.map(row).join('')}</div>`:''}`;
+}
+
+/* ---------- money ---------- */
+function viewMoney(){
+  const mk=mkey(mon), cur=mk===mkey(new Date());
+  const all=S.money, inMonth=all.filter(e=>e.date.startsWith(mk)).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const sum=(arr,t)=>arr.filter(e=>e.type===t).reduce((a,e)=>a+e.amount,0);
+  const inc=sum(inMonth,'in'), out=sum(inMonth,'out'), net=inc-out;
+  const saved=Number(S.start||0)+sum(all,'in')-sum(all,'out');
+  const row=e=>`<div class="item">
+    <div class="txt">${esc(e.note||(e.type==='in'?'إيراد':'مصروف'))}<div class="sm">${e.date.slice(8)}/${e.date.slice(5,7)}</div></div>
+    <div class="amt ${e.type==='in'?'pos':'neg'}">${e.type==='in'?'+':'−'}${fmt(e.amount)}</div>
+    <button class="x" data-act="mdel" data-id="${e.id}" aria-label="احذف">×</button></div>`;
+  return `<div class="monthbar">
+      <button class="arrow" data-act="mnext" aria-label="الشهر اللي بعده">›</button>
+      <div class="m">${mon.toLocaleDateString('ar-EG',{month:'long',year:'numeric'})}</div>
+      <button class="arrow" data-act="mprev" aria-label="الشهر اللي قبله">‹</button>
+    </div>
+    <div class="tiles">
+      <div class="tile"><span>إيراد</span><b class="pos">${fmt(inc)}</b></div>
+      <div class="tile"><span>مصروف</span><b class="neg">${fmt(out)}</b></div>
+      <div class="tile"><span>الصافي</span><b class="${net<0?'neg':'pos'}">${net<0?'−':''}${fmt(Math.abs(net))}</b></div>
+    </div>
+    <h2>محوّشهم</h2>
+    <div class="save"><span>إجمالي اللي معاك</span><b>${saved<0?'−':''}${fmt(Math.abs(saved))} ج</b></div>
+    <div class="startrow"><label for="start">رصيد كان معاك قبل ما تبدأ</label><input id="start" type="number" inputmode="decimal" value="${S.start||''}" placeholder="0"></div>
+    <h2>سجّل حركة</h2>
+    <div class="seg"><button class="${mtype==='out'?'on':''}" data-act="mtype" data-t="out">مصروف</button><button class="${mtype==='in'?'on':''}" data-act="mtype" data-t="in">إيراد</button></div>
+    <div class="form">
+      <input id="mamt" type="number" inputmode="decimal" placeholder="المبلغ" value="${esc(mAmt)}">
+      <input id="mnote" type="text" placeholder="على إيه؟ (اختياري)" value="${esc(mNote)}">
+      <button class="btn" data-act="madd">سجّل ${mtype==='in'?'الإيراد':'المصروف'}</button>
+    </div>
+    <h2>حركات ${cur?'الشهر ده':'الشهر'}</h2>
+    <div class="list">${inMonth.length?inMonth.map(row).join(''):'<div class="empty">مفيش حركات في الشهر ده.</div>'}</div>`;
+}
+
+/* ---------- render ---------- */
+function render(){
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  document.getElementById('app').innerHTML=tab==='today'?viewToday():tab==='ideas'?viewIdeas():viewMoney();
+}
+
+/* ---------- events ---------- */
+document.addEventListener('input',e=>{
+  if(e.target.id==='draft') draft=e.target.value;
+  if(e.target.id==='mamt') mAmt=e.target.value;
+  if(e.target.id==='mnote') mNote=e.target.value;
+});
+document.addEventListener('change',e=>{
+  if(e.target.id==='start'){ S.start=parseFloat(e.target.value)||0; save(); render(); }
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]'); if(!b) return;
+  const a=b.dataset.act, id=Number(b.dataset.id), k=key(new Date());
+  if(a==='tab'){ tab=b.dataset.t; render(); window.scrollTo(0,0); return; }
+  if(a==='inc'){ S.log[k]=(S.log[k]||0)+1; save(); render(); return; }
+  if(a==='dec'){ S.log[k]=Math.max(0,(S.log[k]||0)-1); save(); render(); return; }
+  if(a==='idea-shot'){
+    const i=S.ideas.find(x=>x.id===id); if(i) i.done=true;
+    S.log[k]=(S.log[k]||0)+1; save(); render(); toast('تمام، اتحسب فيديو النهارده'); return;
+  }
+  if(a==='idea-help'){
+    if(!draft.trim()){ toast('اكتب الفكرة الأول'); return; }
+    helpFor=draft.trim(); render(); return;
+  }
+  if(a==='idea-ai'){
+    const p=`عندي فكرة فيديو تصوير: "${helpFor||draft}". ساعدني أطورها: اديني ٥ عناوين تشد، وهيكل الفيديو (٣٠ إلى ٦٠ ثانية)، وقائمة لقطات، وفكرتين شبهها.`;
+    window.open('https://claude.ai/new?q='+encodeURIComponent(p),'_blank'); return;
+  }
+  if(a==='idea-save'){
+    const t=draft.trim(); if(!t){ toast('اكتب الفكرة الأول'); return; }
+    S.ideas.unshift({id:Date.now(),text:t,done:false}); draft=''; helpFor=null; save(); render(); toast('اتحفظت'); return;
+  }
+  if(a==='idea-toggle'){ const i=S.ideas.find(x=>x.id===id); if(i) i.done=!i.done; save(); render(); return; }
+  if(a==='idea-del'){ S.ideas=S.ideas.filter(x=>x.id!==id); save(); render(); return; }
+  if(a==='mprev'){ mon.setMonth(mon.getMonth()-1); render(); return; }
+  if(a==='mnext'){ mon.setMonth(mon.getMonth()+1); render(); return; }
+  if(a==='mtype'){ mtype=b.dataset.t; render(); return; }
+  if(a==='madd'){
+    const amt=parseFloat(mAmt);
+    if(!(amt>0)){ toast('اكتب مبلغ صحيح'); return; }
+    const cur=mkey(mon)===mkey(new Date());
+    S.money.push({id:Date.now(),type:mtype,amount:amt,note:mNote.trim(),date:cur?k:mkey(mon)+'-01'});
+    mAmt=''; mNote=''; save(); render(); toast('اتسجّل'); return;
+  }
+  if(a==='mdel'){ S.money=S.money.filter(x=>x.id!==id); save(); render(); return; }
+});
+
+
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+render();
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden && tab==='today') render(); });
+</script>
+</body>
+</html>
